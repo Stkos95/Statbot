@@ -1,17 +1,18 @@
 from aiogram import types
 from loader import dp
-from keyboards.inline import statistickb
+from keyboards.inline import kb_choice
 from keyboards.kb_fabric import statistic_callback
 
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from states import StatisticStates
 from aiogram.dispatcher import FSMContext
 import openpyxl
-from config import first_time_dict, second_time_dict, actions
-from pprint import pprint
+from config import actions_summary
+from config import admin
+import datetime
+import json
 
-
-new_actions = {
+new_actions_summary = {
     "Первый тайм": {
         "Команда 1": {},
         "Команда 2": {}
@@ -22,7 +23,10 @@ new_actions = {
     }
 }
 
-def kb_1(datas,num):
+
+
+
+def kb_1_summary(datas):
     key_1 = InlineKeyboardMarkup(row_width=2)
 
     for j in datas:
@@ -33,7 +37,7 @@ def kb_1(datas,num):
 
     return key_1
 
-def kb_2(datas):
+def kb_2_summary(datas):
     key_2 = InlineKeyboardMarkup(row_width=2)
     for i in datas:
         if i.startswith('2'):
@@ -43,13 +47,23 @@ def kb_2(datas):
     return key_2
 
 
+
+
 @dp.message_handler(commands=["statistic"], state=None)
-async def request_statistic(message: types.Message, state: FSMContext):
+async def choose_type_of_statistics(message: types.Message, state: FSMContext):
+    await message.answer("Выбери тип статистики:", reply_markup=kb_choice)
+    await StatisticStates.First_state.set()
+
+
+
+
+@dp.callback_query_handler(text="summary", state=StatisticStates.First_state)
+async def request_statistic(call: types.CallbackQuery, state: FSMContext):
     async with state.proxy() as data:
-        data['Команда 1'] = actions["Первый тайм"]["Команда 1"]
-        data['Команда 2'] = actions["Первый тайм"]["Команда 2"]
-        await message.answer("Вы решили считать статистику...\nВот клавиатура...",reply_markup=kb_1(data['Команда 1'],1))
-        await message.answer("Для второй", reply_markup=kb_2(data['Команда 2']))
+        data['Команда 1'] = actions_summary["Первый тайм"]["Команда 1"]
+        data['Команда 2'] = actions_summary["Первый тайм"]["Команда 2"]
+        await call.message.answer("Вы решили считать статистику...\nВот клавиатура...", reply_markup=kb_1_summary(data['Команда 1']))
+        await call.message.answer("Для второй", reply_markup=kb_2_summary(data['Команда 2']))
     await StatisticStates.First_state.set()
 
 @dp.callback_query_handler(statistic_callback.filter(), state=StatisticStates.First_state)
@@ -61,25 +75,26 @@ async def count_statistic(call: types.CallbackQuery, callback_data: dict, state:
         if value.startswith("1"):
 
             for i in check_1time:
+
                 if i == value:
                     data['Команда 1'][i] +=1
 
-            await call.message.edit_reply_markup(reply_markup=kb_1(data['Команда 1'],1))
+            await call.message.edit_reply_markup(reply_markup=kb_1_summary(data['Команда 1']))
         elif value.startswith("2"):
 
             for i in check_2time:
                 if i == value:
                     data['Команда 2'][i] +=1
 
-            await call.message.edit_reply_markup(reply_markup=kb_2(data['Команда 2']))
+            await call.message.edit_reply_markup(reply_markup=kb_2_summary(data['Команда 2']))
 
     await call.answer("work")
 
 
 @dp.message_handler(text="Второй", state=StatisticStates.First_state)
 async def second_half(message: types.Message, state: FSMContext):
-    global new_actions
-    new_actions = {
+    global new_actions_summary
+    new_actions_summary = {
         "Первый тайм": {
             "Команда 1": {},
             "Команда 2": {}
@@ -90,15 +105,14 @@ async def second_half(message: types.Message, state: FSMContext):
         }
     }
     async with state.proxy() as data:
-        new_actions["Первый тайм"]["Команда 1"] = data['Команда 1']
-        new_actions["Первый тайм"]["Команда 2"] = data['Команда 2']
-        data['Команда 1'] = actions["Второй тайм"]["Команда 1"]
-        data['Команда 2'] = actions["Второй тайм"]["Команда 2"]
+        new_actions_summary["Первый тайм"]["Команда 1"] = data['Команда 1']
+        new_actions_summary["Первый тайм"]["Команда 2"] = data['Команда 2']
+        data['Команда 1'] = actions_summary["Второй тайм"]["Команда 1"]
+        data['Команда 2'] = actions_summary["Второй тайм"]["Команда 2"]
 
-        pprint(new_actions)
 
-        await message.answer("Первый тайм закончен, ниже клавиатура для второго тайма:\n для ПЕРВОЙ КОМАНДЫ!!!",reply_markup=kb_1(data['Команда 1'],2))
-        await message.answer("Для второй команды:", reply_markup=kb_2(data['Команда 2']))
+        await message.answer("Первый тайм закончен, ниже клавиатура для второго тайма:\n для ПЕРВОЙ КОМАНДЫ!!!", reply_markup=kb_1_summary(data['Команда 1']))
+        await message.answer("Для второй команды:", reply_markup=kb_2_summary(data['Команда 2']))
     await StatisticStates.next()
 
 
@@ -114,14 +128,14 @@ async def count_statistic(call: types.CallbackQuery, callback_data: dict, state:
                 if i == value:
                     data['Команда 1'][i] += 1
 
-            await call.message.edit_reply_markup(reply_markup=kb_1(data['Команда 1'], 1))
+            await call.message.edit_reply_markup(reply_markup=kb_1_summary(data['Команда 1']))
         elif value.startswith("2"):
 
             for i in check_2time:
                 if i == value:
                     data['Команда 2'][i] += 1
 
-            await call.message.edit_reply_markup(reply_markup=kb_2(data['Команда 2']))
+            await call.message.edit_reply_markup(reply_markup=kb_2_summary(data['Команда 2']))
 
     await call.answer("work_1")
 
@@ -131,33 +145,19 @@ async def count_statistic(call: types.CallbackQuery, callback_data: dict, state:
 
 @dp.message_handler(text="Готово",state=StatisticStates.Second_state)
 async def ready(message: types.Message, state: FSMContext):
-     async with state.proxy() as data:
-        new_actions["Второй тайм"]["Команда 1"] = data['Команда 1']
-        new_actions["Второй тайм"]["Команда 2"] = data['Команда 2']
-        pprint(new_actions)
-
-
-        # text = ['Ваша статистика:']
-        # text.append("За первый тайм: ")
-        # print(data)
-        # first_time_itog = data["Первый тайм"]
-        # second_time_itog = data["Второй тайм"]
-        # for i in first_time_itog :
-        #     text.append(f"{i} : {first_time_itog[i]}")
-        # text.append("За второй тайм: ")
-        # for i in second_time_itog:
-        #     text.append(f"{i} : {second_time_itog[i]}")
-        #
-        #
-        # await message.answer(text="\n".join(text))
-        #
-        #
-        # itog = {}
-        #
-        # itog["первый тайм"] = first_time_itog
+    async with state.proxy() as data:
+        new_actions_summary["Второй тайм"]["Команда 1"] = data['Команда 1']
+        new_actions_summary["Второй тайм"]["Команда 2"] = data['Команда 2']
 
 
 
+    name = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+
+    with open(f"{name}.json", "w",encoding="UTF-8") as js:
+        json.dump(new_actions_summary, js, ensure_ascii=False)
+        print(name)
 
 
-
+    await dp.bot.send_message(chat_id=admin, text="сейчас отправят файл!!")
+    await dp.bot.send_document(chat_id=admin, document=open(f"{name}.json", "rb"))
+    await state.finish()
