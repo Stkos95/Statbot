@@ -3,7 +3,7 @@ from loader import dp
 from keyboards.inline import kb_choice
 from keyboards.kb_fabric import statistic_callback
 
-from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup,KeyboardButton
 from states import StatisticStates
 from aiogram.dispatcher import FSMContext
 import openpyxl
@@ -59,12 +59,15 @@ async def choose_type_of_statistics(message: types.Message, state: FSMContext):
 
 @dp.callback_query_handler(text="summary", state=StatisticStates.First_state)
 async def request_statistic(call: types.CallbackQuery, state: FSMContext):
+    await call.answer()
     async with state.proxy() as data:
         data['Команда 1'] = actions_summary["Первый тайм"]["Команда 1"]
         data['Команда 2'] = actions_summary["Первый тайм"]["Команда 2"]
         await call.message.answer("Вы решили считать статистику...\nВот клавиатура...", reply_markup=kb_1_summary(data['Команда 1']))
         await call.message.answer("Для второй", reply_markup=kb_2_summary(data['Команда 2']))
+    await call.message.answer(text = "Для продолжения нажмите на клавиатуре 'Второй'",reply_markup=ReplyKeyboardMarkup(resize_keyboard=True).add(KeyboardButton(text="Второй")))
     await StatisticStates.First_state.set()
+
 
 @dp.callback_query_handler(statistic_callback.filter(), state=StatisticStates.First_state)
 async def count_statistic(call: types.CallbackQuery, callback_data: dict, state: FSMContext):
