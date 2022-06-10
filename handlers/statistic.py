@@ -11,6 +11,7 @@ from config import actions_summary
 from config import admin
 import datetime
 import json
+import os
 
 new_actions_summary = {
     "Первый тайм": {
@@ -52,11 +53,11 @@ def kb_2_summary(datas):
 @dp.message_handler(commands=["statistic"], state=None)
 async def choose_type_of_statistics(message: types.Message, state: FSMContext):
     await message.answer("Выбери тип статистики:", reply_markup=kb_choice)
-    await StatisticStates.First_state.set()
+    # await StatisticStates.First_state.set()
 
 
 
-
+# @dp.callback_query_handler(text="summary", state=StatisticStates.First_state)
 @dp.callback_query_handler(text="summary", state=StatisticStates.First_state)
 async def request_statistic(call: types.CallbackQuery, state: FSMContext):
     await call.answer()
@@ -156,11 +157,14 @@ async def ready(message: types.Message, state: FSMContext):
 
     name = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
 
-    with open(f"{name}.json", "w",encoding="UTF-8") as js:
+    with open(f"jsonFiles/{name}.json", "w",encoding="UTF-8") as js:
         json.dump(new_actions_summary, js, ensure_ascii=False)
         print(name)
 
 
     await dp.bot.send_message(chat_id=admin, text="сейчас отправят файл!!")
-    await dp.bot.send_document(chat_id=admin, document=open(f"{name}.json", "rb"))
+    await dp.bot.send_document(chat_id=admin, document=open(f"jsonFiles/{name}.json", "rb"))
+    d = len(os.listdir("jsonFiles/"))
+    if d >= 3:
+        await dp.bot.send_message(chat_id=admin, text=f"Уже скопилось {d} файлов, может пора их удалить?")
     await state.finish()
