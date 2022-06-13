@@ -1,5 +1,6 @@
 from aiogram import types
 from loader import dp
+from other.other_functions import operating_func
 from keyboards.inline import kb_choice
 from keyboards.kb_fabric import statistic_callback
 from list_of_actions import get_actions_for_counting
@@ -52,49 +53,45 @@ def kb_2_summary(datas):
 @dp.callback_query_handler(text="summary")
 async def request_statistic(call: types.CallbackQuery, state: FSMContext):
     actions = get_actions_for_counting()
+    print(actions)
     await call.answer()
     async with state.proxy() as data:
-        data['Команда 1'] = actions.first.team_one
-        data['Команда 2'] = actions.first.team_two
+        data['Команда 1'] = actions.team_one
+        data['Команда 2'] = actions.team_two
         print(data['Команда 2'])
+        print(type(data['Команда 2']))
         await call.message.answer("Вы решили считать общую послематчевую статистику...\nВот клавиатура...", reply_markup=kb_1_summary(data['Команда 1']))
         await call.message.answer("Для второй", reply_markup=kb_2_summary(data['Команда 2']))
     await call.message.answer(text = "Для продолжения нажмите на клавиатуре 'Второй'",reply_markup=ReplyKeyboardMarkup(resize_keyboard=True).add(KeyboardButton(text="Второй")))
     await SummaryStates.First_state.set()
 
-def test_filter(foo):
-    return foo == "statistic" or foo == "statistic_2"
 
-@dp.callback_query_handler(statistic_callback.filter(), state=SummaryStates.First_state)
-async def count_statistic(call: types.CallbackQuery, callback_data: dict, state: FSMContext):
+
+@dp.callback_query_handler(statistic_callback.filter(team="1"), state=SummaryStates.First_state)
+async def count_statistic_1(call: types.CallbackQuery, callback_data: dict, state: FSMContext):
     value = callback_data['action']
-    team = callback_data['team']
-    print(callback_data)
     async with state.proxy() as data:
-        check_1time = data['Команда 1']
-        check_2time = data['Команда 2']
-        if team == '1':
-
-            for i in check_1time:
-                print(222222)
-                if i == value:
-                    print(111)
-                    data['Команда 1'][i] +=1
-
-            await call.message.edit_reply_markup(reply_markup=kb_1_summary(data['Команда 1']))
-        elif team == '2':
-
-            for i in check_2time:
-                if i == value:
-                    data['Команда 2'][i] +=1
-
-            await call.message.edit_reply_markup(reply_markup=kb_2_summary(data['Команда 2']))
-
+        operating_func(data=data['Команда 1'], value=value)
+        await call.message.edit_reply_markup(reply_markup=kb_1_summary(data['Команда 1']))
     await call.answer("work")
 
 
+@dp.callback_query_handler(statistic_callback.filter(team="2"), state=SummaryStates.First_state)
+async def count_statistic_2(call: types.CallbackQuery, callback_data: dict, state: FSMContext):
+    value = callback_data['action']
+    print(callback_data)
+    async with state.proxy() as data:
+        operating_func(data=data['Команда 2'], value=value)
+        await call.message.edit_reply_markup(reply_markup=kb_2_summary(data['Команда 2']))
+    await call.answer("work")
+
 @dp.message_handler(text="Второй", state=SummaryStates.First_state)
 async def second_half(message: types.Message, state: FSMContext):
+    async with state.proxy() as data:
+        data["result"] = {}
+
+
+
     global new_actions_summary
     new_actions_summary = {
         "Первый тайм": {

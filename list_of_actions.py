@@ -4,17 +4,17 @@ from dataclasses import dataclass
 times = ("First half", "Second half")
 teams = ("Team one", "Team two")
 
-
-class Times(NamedTuple):
+@dataclass()
+class Times():
     team_one : dict
     team_two : dict
 
 
-class Halfs(NamedTuple):
-    first : Times
-    second : Times
-
-
+# class Halfs(NamedTuple):
+#     first : Times
+#     second : Times
+#
+#
 
 
 # ---------------------Для послематчевого табло----------------
@@ -53,7 +53,7 @@ def act():
     return {action: 0 for action in actions_base}
 
 def get_actions_for_counting():
-    return Halfs(first=Times(team_one=act(), team_two=act()),second=(Times(team_one=act(),team_two=act())))
+    return Times(team_one=act(), team_two=act())
 
 
 def get_dict_of_match_info(times, actions, teams=None) -> dict:
@@ -61,5 +61,7 @@ def get_dict_of_match_info(times, actions, teams=None) -> dict:
 
 def get_dict_of_team_analytic(times: tuple, actions: tuple) -> dict:
     return {half: {action: 0 for action in actions} for half in times}
+
+
 
 
