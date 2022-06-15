@@ -2,7 +2,7 @@ from aiogram import types
 from loader import dp
 from other.other_functions import operating_func
 from keyboards.kb_fabric import statistic_callback
-from list_of_actions import get_actions_for_counting
+from list_of_actions import get_actions_for_counting, Teams
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup,KeyboardButton
 from states import SummaryStates
 from aiogram.dispatcher import FSMContext
@@ -31,7 +31,7 @@ async def request_statistic(call: types.CallbackQuery, state: FSMContext):
     async with state.proxy() as data:
         data['Команда 1'] = actions.team_one
         data['Команда 2'] = actions.team_two
-        data['result'] = {}
+        # data['result'] = {}
         print(data['Команда 2'])
         print(type(data['Команда 2']))
         await call.message.answer("Вы решили считать общую послематчевую статистику...\nВот клавиатура...", reply_markup=kb_1_summary(data['Команда 1']))
@@ -62,9 +62,8 @@ async def count_statistic_2(call: types.CallbackQuery, callback_data: dict, stat
 @dp.message_handler(text="Второй", state=SummaryStates.First_state)
 async def second_half(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
-        data["result"]["1 half"] = {}
-        data["result"]["1 half"]["1"] = data['Команда 1']
-        data["result"]["1 half"]["2"] = data['Команда 2']
+        # data["result"]["1 half"] = {}
+        data["result_1"] = Teams(team_one=data['Команда 1'], team_two=data['Команда 2'])
         data['Команда 1'] = get_actions_for_counting().team_one
         data['Команда 2'] = get_actions_for_counting().team_two
         await message.answer("Первый тайм закончен, ниже клавиатура для второго тайма:\n для ПЕРВОЙ КОМАНДЫ!!!", reply_markup=kb_1_summary(data['Команда 1']))
@@ -73,11 +72,13 @@ async def second_half(message: types.Message, state: FSMContext):
 @dp.message_handler(text="Готово",state=SummaryStates.First_state)
 async def ready(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
-        data["result"]["2 half"] = {}
-        data["result"]["2 half"]["1"] = data['Команда 1']
-        data["result"]["2 half"]["2"] = data['Команда 2']
-        pprint(data["result"])
-        results = data["result"]
+        first_half_result = data["result_1"]
+        second_half_result = Teams(team_one=data['Команда 1'], team_two=data['Команда 2'])
+        # data["result"].append(second_half_result)
+        for i in first_half_result:
+            print(i)
+
+
 
     # datas = finalResults(results)
     # pprint(datas)
