@@ -1,7 +1,7 @@
 from aiogram import types
 from loader import dp
 from processing.count_statistic_after_match import operating_func
-from processing.savetoExcel import create_template_of_excel
+from processing.savetoExcel_summary import create_template_of_excel
 from keyboards.kb_fabric import statistic_callback
 from list_of_actions import act
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, KeyboardButton
@@ -87,10 +87,6 @@ async def ready(message: types.Message, state: FSMContext):
     await dp.bot.send_message(chat_id=admin, text="сейчас отправят файл!!")
     await dp.bot.send_document(chat_id=admin, document=open(f"./excel files completed/{name}.xls", "rb"))
     await state.finish()
-    # d = len(os.listdir("jsonFiles/"))
-    # if d >= 3:
-    #     await dp.bot.send_message(chat_id=admin, text=f"Уже скопилось {d} файлов, может пора их удалить?")
-    # await state.finish()
 
 
 @dp.message_handler(state=SummaryStates.First_state)

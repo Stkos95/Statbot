@@ -29,7 +29,7 @@ ACTIONS_FOR_KB = ('передача✅',
                   'Угловые')
 
 # ----------------------------------Personal -----------------------------------
-zones = ('defence', 'middle', 'atack')
+ZONES = ('defence', 'middle', 'atack', 'shoots', 'other')
 
 ACTIONS_FOR_PERSONAL = ('Сопр-назад',
                         'Сопр-назад❌',
@@ -63,15 +63,3 @@ OTHER = ("Потери мяча",
          "Штрафные",
          "Прием мяча",
          "Прием мяча❌")
-
-
-def get_zone_actions():
-    return {i: 0 for i in ACTIONS_FOR_PERSONAL}
-
-
-def get_other_actions():
-    return {i: 0 for i in OTHER}
-
-
-def get_shoots_actions():
-    return {i: 0 for i in SHOOTS}
